@@ -7,6 +7,7 @@
 ## The order of libs is important. See lib/Makefile.in for details
 %define bind_export_libs isc dns isccfg irs
 %{!?_export_dir:%global _export_dir /bind9-export/}
+
 Summary:        Domain Name System software
 Name:           bind
 Version:        9.16.15
@@ -32,17 +33,17 @@ Source12:       generate-rndc-key.sh
 Source13:       named.rwtab
 Source14:       setup-named-softhsm.sh
 Source15:       named-chroot.files
-Source16:  bind-9.3.1rc1-sdb_tools-Makefile.in
-Source17:  dnszone.schema
-Source18: README.sdb_pgsql
-Source30: ldap2zone.c
-Source31: ldap2zone.1
-Source32: named-sdb.8
-Source33: zonetodb.1
-Source34: zone2sqlite.1
-Source39: named-sdb.service
-Source40: named-sdb-chroot.service
-Source45: named-sdb-chroot-setup.service
+Source16:       bind-9.3.1rc1-sdb_tools-Makefile.in
+Source17:       dnszone.schema
+Source18:       README.sdb_pgsql
+Source30:       ldap2zone.c
+Source31:       ldap2zone.1
+Source32:       named-sdb.8
+Source33:       zonetodb.1
+Source34:       zone2sqlite.1
+Source39:       named-sdb.service
+Source40:       named-sdb-chroot.service
+Source45:       named-sdb-chroot-setup.service
 # CVE-2019-6470 is fixed by updating the dhcp package to 4.4.1 or greater
 Patch0:         CVE-2019-6470.nopatch
 # CVE-2020-8623 only impacts package built with "--enable-native-pkcs11"
@@ -50,14 +51,13 @@ Patch1:         CVE-2020-8623.nopatch
 Patch9:         bind-9.14-config-pkcs11.patch
 Patch10:        bind-9.10-dist-native-pkcs11.patch
 # SDB patches
-Patch11: bind-9.3.2b2-sdbsrc.patch
-Patch12: bind-9.10-sdb.patch
-Patch13: bind-9.3.2b1-fix_sdb_ldap.patch
-
-Patch101:bind-96-old-api.patch
+Patch11:        bind-9.3.2b2-sdbsrc.patch
+Patch12:        bind-9.10-sdb.patch
+Patch13:        bind-9.3.2b1-fix_sdb_ldap.patch
+Patch101:       bind-96-old-api.patch
 # [ISC-Bugs #42525] non-portable use of strlcat in contrib/sdb/ldap/zone2ldap.c
 # introduced by https://source.isc.org/cgi-bin/gitweb.cgi?p=bind9.git;a=commit;h=fc9f0ac5778f78003a7acc957a23711811fec122
-Patch137:bind-9.10-use-of-strlcat.patch
+Patch137:       bind-9.10-use-of-strlcat.patch
 
 BuildRequires:  gcc
 BuildRequires:  json-c-devel
@@ -214,11 +214,10 @@ BuildArch:      noarch
 This package provides a module which allows commands to be sent to rndc directly from Python programs.
 
 %package sdb
-Summary: BIND server with database backends and DLZ support
-
-Requires: systemd
-Requires: bind%{?_isa} = %{version}-%{release}
-Requires: bind-libs%{?_isa} = %{version}-%{release}
+Summary:        BIND server with database backends and DLZ support
+Requires:       bind%{?_isa} = %{version}-%{release}
+Requires:       bind-libs%{?_isa} = %{version}-%{release}
+Requires:       systemd
 
 %description sdb
 BIND (Berkeley Internet Name Domain) is an implementation of the DNS
@@ -233,9 +232,9 @@ or in the filesystem (dirdb), in addition to the standard in-memory RBT
 %package sdb-chroot
 Summary:        A chroot runtime environment for the ISC BIND DNS server, named-sdb(8)
 Prefix:         %{chroot_sdb_prefix}
+Requires:       bind-sdb%{?_isa} = %{version}-%{release}
 # grep is required due to setup-named-chroot.sh script
 Requires:       grep
-Requires:       bind-sdb%{?_isa} = %{version}-%{release}
 
 %description sdb-chroot
 This package contains a tree of files which can be used as a
@@ -430,15 +429,15 @@ install -m 644 %{SOURCE39} %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE40} %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE45} %{buildroot}%{_unitdir}
 
-mkdir -p ${RPM_BUILD_ROOT}/etc/openldap/schema
-install -m 644 %{SOURCE17} ${RPM_BUILD_ROOT}/etc/openldap/schema/dnszone.schema
+mkdir -p %{buildroot}%{_sysconfdir}/openldap/schema
+install -m 644 %{SOURCE17} %{buildroot}%{_sysconfdir}/openldap/schema/dnszone.schema
 install -m 644 %{SOURCE18} contrib/sdb/pgsql/
 
 # SDB manpages
-install -m 644 %{SOURCE31} ${RPM_BUILD_ROOT}%{_mandir}/man1/ldap2zone.1
-install -m 644 %{SOURCE32} ${RPM_BUILD_ROOT}%{_mandir}/man8/named-sdb.8
-install -m 644 %{SOURCE33} ${RPM_BUILD_ROOT}%{_mandir}/man1/zonetodb.1
-install -m 644 %{SOURCE34} ${RPM_BUILD_ROOT}%{_mandir}/man1/zone2sqlite.1
+install -m 644 %{SOURCE31} %{buildroot}%{_mandir}/man1/ldap2zone.1
+install -m 644 %{SOURCE32} %{buildroot}%{_mandir}/man8/named-sdb.8
+install -m 644 %{SOURCE33} %{buildroot}%{_mandir}/man1/zonetodb.1
+install -m 644 %{SOURCE34} %{buildroot}%{_mandir}/man1/zone2sqlite.1
 
 %pre
 if ! getent group named >/dev/null; then
@@ -501,13 +500,13 @@ fi;
 :;
 
 %posttrans sdb-chroot
-if [ -x /usr/sbin/selinuxenabled ] && /usr/sbin/selinuxenabled; then
+if [ -x %{_sbindir}/selinuxenabled ] && %{_sbindir}/selinuxenabled; then
   [ -x /sbin/restorecon ] && /sbin/restorecon %{chroot_sdb_prefix}/dev/* > /dev/null 2>&1;
 fi;
 :;
 
 %preun sdb-chroot
-%systemd_preun named-sdb-chroot.service 
+%systemd_preun named-sdb-chroot.service
 :;
 
 %postun sdb-chroot
@@ -683,10 +682,10 @@ fi;
 %{_unitdir}/named-sdb-chroot-setup.service
 %{_libexecdir}/setup-named-chroot.sh
 %defattr(0664,root,named,-)
-%ghost %dev(c,1,3) %verify(not mtime) %{chroot_sdb_prefix}/dev/null
-%ghost %dev(c,1,8) %verify(not mtime) %{chroot_sdb_prefix}/dev/random
-%ghost %dev(c,1,9) %verify(not mtime) %{chroot_sdb_prefix}/dev/urandom
-%ghost %dev(c,1,5) %verify(not mtime) %{chroot_sdb_prefix}/dev/zero
+%ghost %{dev(c,1,3)} %verify(not mtime) %{chroot_sdb_prefix}/dev/null
+%ghost %{dev(c,1,8)} %verify(not mtime) %{chroot_sdb_prefix}/dev/random
+%ghost %{dev(c,1,9)} %verify(not mtime) %{chroot_sdb_prefix}/dev/urandom
+%ghost %{dev(c,1,5)} %verify(not mtime) %{chroot_sdb_prefix}/dev/zero
 %defattr(0640,root,named,0750)
 %dir %{chroot_sdb_prefix}
 %dir %{chroot_sdb_prefix}/dev
@@ -702,7 +701,7 @@ fi;
 %defattr(0660,root,named,01770)
 %dir %{chroot_sdb_prefix}%{_localstatedir}/named
 %defattr(-,root,root,-)
-%dir %{chroot_sdb_prefix}/usr
+%dir %{chroot_sdb_prefix}%{_prefix}
 %dir %{chroot_sdb_prefix}/%{_libdir}
 %dir %{chroot_sdb_prefix}/%{_libdir}/bind
 %dir %{chroot_sdb_prefix}/%{_datadir}/GeoIP
