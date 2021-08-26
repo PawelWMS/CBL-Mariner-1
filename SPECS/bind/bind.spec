@@ -33,10 +33,7 @@ Source12:       generate-rndc-key.sh
 Source13:       named.rwtab
 Source14:       setup-named-softhsm.sh
 Source15:       named-chroot.files
-Source16:       bind-9.3.1rc1-sdb_tools-Makefile.in
 Source17:       dnszone.schema
-Source18:       README.sdb_pgsql
-Source30:       ldap2zone.c
 Source31:       ldap2zone.1
 Source32:       named-sdb.8
 Source33:       zonetodb.1
@@ -50,14 +47,6 @@ Patch0:         CVE-2019-6470.nopatch
 Patch1:         CVE-2020-8623.nopatch
 Patch9:         bind-9.14-config-pkcs11.patch
 Patch10:        bind-9.10-dist-native-pkcs11.patch
-# SDB patches
-Patch11:        bind-9.3.2b2-sdbsrc.patch
-Patch12:        bind-9.10-sdb.patch
-Patch13:        bind-9.3.2b1-fix_sdb_ldap.patch
-Patch101:       bind-96-old-api.patch
-# [ISC-Bugs #42525] non-portable use of strlcat in contrib/sdb/ldap/zone2ldap.c
-# introduced by https://source.isc.org/cgi-bin/gitweb.cgi?p=bind9.git;a=commit;h=fc9f0ac5778f78003a7acc957a23711811fec122
-Patch137:       bind-9.10-use-of-strlcat.patch
 
 BuildRequires:  gcc
 BuildRequires:  json-c-devel
@@ -257,32 +246,6 @@ cp -r lib/dns{,-pkcs11}
 cp -r lib/ns{,-pkcs11}
 %patch10 -p1 -b .dist_pkcs11
 
-%patch101 -p1 -b .old-api
-mkdir bin/named-sdb
-cp -r bin/named/* bin/named-sdb
-%patch11 -p1 -b .sdbsrc
-# SDB ldap
-cp -fp contrib/sdb/ldap/ldapdb.[ch] bin/named-sdb
-# SDB postgreSQL
-cp -fp contrib/sdb/pgsql/pgsqldb.[ch] bin/named-sdb
-# SDB sqlite
-cp -fp contrib/sdb/sqlite/sqlitedb.[ch] bin/named-sdb
-# SDB Berkeley DB - needs to be ported to DB4!
-#cp -fp contrib/sdb/bdb/bdb.[ch] bin/named_sdb
-# SDB dir
-cp -fp contrib/sdb/dir/dirdb.[ch] bin/named-sdb
-# SDB tools
-mkdir -p bin/sdb_tools
-cp -fp %{SOURCE30} bin/sdb_tools/ldap2zone.c
-cp -fp %{SOURCE16} bin/sdb_tools/Makefile.in
-#cp -fp contrib/sdb/bdb/zone2bdb.c bin/sdb_tools
-cp -fp contrib/sdb/ldap/{zone2ldap.1,zone2ldap.c} bin/sdb_tools
-cp -fp contrib/sdb/pgsql/zonetodb.c bin/sdb_tools
-cp -fp contrib/sdb/sqlite/zone2sqlite.c bin/sdb_tools
-%patch12 -p1 -b .sdb
-%patch13 -p1 -b .fix_sdb_ldap
-%patch137 -p1 -b .strlcat_fix
-
 libtoolize -c -f; aclocal -I libtool.m4 --force; autoconf -f
 
 %build
@@ -299,7 +262,6 @@ libtoolize -c -f; aclocal -I libtool.m4 --force; autoconf -f
     --with-dlz-ldap=yes \
     --with-dlz-mysql=yes \
     --with-dlz-postgres=yes \
-    --with-docbook-xsl=%{_datadir}/sgml/docbook/xsl-ns-stylesheets \
     --with-libtool \
     --with-lmdb=yes \
     --with-python=python3 \
@@ -425,13 +387,14 @@ install -m 644 %{SOURCE13} %{buildroot}%{_sysconfdir}/rwtab.d/named
 # Remove unwanted files
 rm -f %{buildroot}%{_prefix}%{_sysconfdir}/bind.keys
 
+# Systemd unit files
+mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
 install -m 644 %{SOURCE39} %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE40} %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE45} %{buildroot}%{_unitdir}
 
 mkdir -p %{buildroot}%{_sysconfdir}/openldap/schema
 install -m 644 %{SOURCE17} %{buildroot}%{_sysconfdir}/openldap/schema/dnszone.schema
-install -m 644 %{SOURCE18} contrib/sdb/pgsql/
 
 # SDB manpages
 install -m 644 %{SOURCE31} %{buildroot}%{_mandir}/man1/ldap2zone.1
@@ -630,10 +593,10 @@ fi;
 %config(noreplace) %{_sysconfdir}/named-chroot.files
 %{_libexecdir}/setup-named-chroot.sh
 %defattr(0664,root,named,-)
-%ghost %{dev(c,1,3)} %verify(not mtime) %{chroot_prefix}/dev/null
-%ghost %{dev(c,1,8)} %verify(not mtime) %{chroot_prefix}/dev/random
-%ghost %{dev(c,1,9)} %verify(not mtime) %{chroot_prefix}/dev/urandom
-%ghost %{dev(c,1,5)} %verify(not mtime) %{chroot_prefix}/dev/zero
+%ghost %dev(c,1,3) %verify(not mtime) %{chroot_prefix}/dev/null
+%ghost %dev(c,1,8) %verify(not mtime) %{chroot_prefix}/dev/random
+%ghost %dev(c,1,9) %verify(not mtime) %{chroot_prefix}/dev/urandom
+%ghost %dev(c,1,5) %verify(not mtime) %{chroot_prefix}/dev/zero
 %defattr(0640,root,named,0750)
 %dir %{chroot_prefix}
 %dir %{chroot_prefix}/dev
@@ -662,19 +625,12 @@ fi;
 
 %files sdb
 %{_unitdir}/named-sdb.service
-%{_mandir}/man1/zone2ldap.1*
 %{_mandir}/man1/ldap2zone.1*
 %{_mandir}/man1/zonetodb.1*
 %{_mandir}/man1/zone2sqlite.1*
 %{_mandir}/man8/named-sdb.8*
-%doc contrib/sdb/ldap/README.ldap contrib/sdb/ldap/INSTALL.ldap contrib/sdb/pgsql/README.sdb_pgsql
 %dir %{_sysconfdir}/openldap/schema
 %config(noreplace) %{_sysconfdir}/openldap/schema/dnszone.schema
-%{_sbindir}/named-sdb
-%{_sbindir}/zone2ldap
-%{_sbindir}/ldap2zone
-%{_sbindir}/zonetodb
-%{_sbindir}/zone2sqlite
 
 %files sdb-chroot
 %config(noreplace) %{_sysconfdir}/named-chroot.files
@@ -682,10 +638,10 @@ fi;
 %{_unitdir}/named-sdb-chroot-setup.service
 %{_libexecdir}/setup-named-chroot.sh
 %defattr(0664,root,named,-)
-%ghost %{dev(c,1,3)} %verify(not mtime) %{chroot_sdb_prefix}/dev/null
-%ghost %{dev(c,1,8)} %verify(not mtime) %{chroot_sdb_prefix}/dev/random
-%ghost %{dev(c,1,9)} %verify(not mtime) %{chroot_sdb_prefix}/dev/urandom
-%ghost %{dev(c,1,5)} %verify(not mtime) %{chroot_sdb_prefix}/dev/zero
+%ghost %dev(c,1,3) %verify(not mtime) %{chroot_sdb_prefix}/dev/null
+%ghost %dev(c,1,8) %verify(not mtime) %{chroot_sdb_prefix}/dev/random
+%ghost %dev(c,1,9) %verify(not mtime) %{chroot_sdb_prefix}/dev/urandom
+%ghost %dev(c,1,5) %verify(not mtime) %{chroot_sdb_prefix}/dev/zero
 %defattr(0640,root,named,0750)
 %dir %{chroot_sdb_prefix}
 %dir %{chroot_sdb_prefix}/dev
