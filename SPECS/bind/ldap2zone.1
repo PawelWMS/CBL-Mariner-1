@@ -1,0 +1,41 @@
+.\" Copyright (C) 2004, 2005 Stig Venaas <venaas@uninett.no>
+.\" 
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" Manpage written by Jan Gorig
+.TH ldap2zone 1 "15 March 2010" "BIND9"
+.SH NAME
+ldap2zone - Creates zone file from LDAP dnszone information
+.SH SYNOPSIS
+.B ldap2zone zone-name LDAP-URL default-ttl [serial]
+.SH DESCRIPTION
+ldap2zone is a tool that reads info for a zone from LDAP and constructs a standard plain ascii zone file that is written to the standard output. The LDAP information has to be stored using the dnszone schema. The schema is used by BIND with LDAP back-end.
+
+\fBzone-name\fR
+.RS 4
+Name of the zone, eg "mydomain.net."
+.RE
+.PP
+\fBLDAP-URL\fR
+.RS 4
+LDAP URL to dnszone information
+.RE
+.PP
+\fBdefault-ttl\fR
+.RS 4
+Default TTL value to be used in zone
+.RE
+.PP
+\fBserial\fR
+.RS 4
+(optional) Program checks this number to be different than SOA serial number.
+.RE
+
+.SH "EXIT STATUS"
+Exits with 0 on success or 1 on failure.
+.SH "SEE ALSO"
+named(8) ldap(3) 
+http://www.venaas.no/dns/ldap2zone/
+.SH "COPYRIGHT"
+Copyright (C) 2004, 2005 Stig Venaas

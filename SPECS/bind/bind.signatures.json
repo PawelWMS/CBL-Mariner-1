@@ -1,8 +1,17 @@
 {
  "Signatures": {
+  "README.sdb_pgsql": "7bba5110c5f3f71b53f0ac05a03992e52c8cc2cb0af9579148cda3d815d65271",
   "bind-9.16.15.tar.xz": "98b6f432d878a7bf8f57eb7b3c28be27278cf6b9989154bfe6c81104b38e7839",
+  "bind-9.3.1rc1-sdb_tools-Makefile.in": "8d1fe73127b09784f0206a00578616072b959b6c01cac2e59a971bc3a7b2bccc",
+  "dnszone.schema": "cc76bee61fffc8eb168cd0a3e693ab49f6b8b58b200f2c13163b1776f52db403",
   "generate-rndc-key.sh": "da0964516a9abe4074e262a1d0b7f63e63b2150c4cc2dddaaca029010383c422",
+  "ldap2zone.1": "58e8fadb823766243393d5e685bfe6f0512273e6d8bc50d46058f2b2ab404441",
+  "ldap2zone.c": "3d542ab5b763ef1aabb6c4824609f231aa5081cf34f2899de92eeefe78e52430",
   "named-chroot.files": "5dbc7bd2a21836fb86cb740a2d4d72eb9f2b4f341996cd0c8ae9c39e95c0d76c",
+  "named-sdb-chroot-setup.service": "5c2402d12ae20eda4376d63b8a2229da50b3ba94f26d3b9562ee8d30b0067f56",
+  "named-sdb-chroot.service": "935d46f351e491825099b1bcfbb8a56d7dc4db316db57f47b1ba47c641b03bf5",
+  "named-sdb.8": "c932791b67145c7142c1d88af92aa213f8f1212c416a15c753b81e316f5933ed",
+  "named-sdb.service": "896f4d3a44059904d705e836ade922cba6d012dbb841e6ced3dd1b069dfed4fb",
   "named.conf.sample": "1807f11df688de4eb8cdcc97bd1a8863d81b03b1f24af96f3639de40bc8e538a",
   "named.empty": "44e2cc6e10328cd3604148763458978f547ee54c3ff46468944d535644fc6da1",
   "named.localhost": "9a2aa18c87202a691cc641f0c7e027dff3a2bb30917990f1b04c237e667530c8",
@@ -15,6 +24,8 @@
   "named.sysconfig": "8f8eff846667b7811358e289e9fe594de17d0e47f2b8cebf7840ad8db7f34816",
   "setup-named-chroot.sh": "786fbc88c7929fadf217cf2286f2eb03b6fba14843e5da40ad43c0022dd71c3a",
   "setup-named-softhsm.sh": "3b243d9e48577acb95a08ae5dd7288c5eec4830bc02bd29b1f1724c497d12864",
-  "trusted-key.key": "02813e4e992f6faea0fcf1dc883d732b283bfea3044612cd7406c2e0106d9b07"
+  "trusted-key.key": "02813e4e992f6faea0fcf1dc883d732b283bfea3044612cd7406c2e0106d9b07",
+  "zone2sqlite.1": "6d857c84149ea5779e5e452002fabf23b544638c872b9a2cf461449453cac8b3",
+  "zonetodb.1": "290ed2770dd1432cc2a74d0910b4331c5c883a3c59a00666102126759f5073f1"
  }
 }

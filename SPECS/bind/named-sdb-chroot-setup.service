@@ -1,0 +1,12 @@
+[Unit]
+Description=Set-up/destroy chroot environment for named-sdb
+BindsTo=named-sdb-chroot.service
+Wants=named-setup-rndc.service
+After=named-setup-rndc.service
+
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/setup-named-chroot.sh /var/named/chroot_sdb on /etc/named-chroot.files
+ExecStop=/usr/libexec/setup-named-chroot.sh /var/named/chroot_sdb off /etc/named-chroot.files

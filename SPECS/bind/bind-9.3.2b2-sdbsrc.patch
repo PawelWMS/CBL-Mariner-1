@@ -1,0 +1,230 @@
+diff --git a/contrib/sdb/bdb/bdb.c b/contrib/sdb/bdb/bdb.c
+index 23594bb..b3c6619 100644
+--- a/contrib/sdb/bdb/bdb.c
++++ b/contrib/sdb/bdb/bdb.c
+@@ -43,7 +43,7 @@
+ #include <dns/lib.h>
+ #include <dns/ttl.h>
+ 
+-#include <named/bdb.h>
++#include "bdb.h"
+ #include <named/globals.h>
+ #include <named/config.h>
+ 
+diff --git a/contrib/sdb/ldap/zone2ldap.c b/contrib/sdb/ldap/zone2ldap.c
+index 07c89bc..23dd873 100644
+--- a/contrib/sdb/ldap/zone2ldap.c
++++ b/contrib/sdb/ldap/zone2ldap.c
+@@ -63,16 +63,16 @@ typedef struct LDAP_INFO
+ ldap_info;
+ 
+ /* usage Info */
+-void usage ();
++void usage (void);
+ 
+ /* Add to the ldap dit */
+ void add_ldap_values (ldap_info * ldinfo);
+ 
+ /* Init an ldap connection */
+-void init_ldap_conn ();
++void init_ldap_conn (void);
+ 
+ /* Ldap error checking */
+-void ldap_result_check (char *msg, char *dn, int err);
++void ldap_result_check (const char *msg, char *dn, int err);
+ 
+ /* Put a hostname into a char ** array */
+ char **hostname_to_dn_list (char *hostname, char *zone, unsigned int flags);
+@@ -88,7 +88,7 @@ void add_to_rr_list (char *dn, char *name, char *type, char *data,
+ 		     unsigned int ttl, unsigned int flags);
+ 
+ /* Error checking */
+-void isc_result_check (isc_result_t res, char *errorstr);
++void isc_result_check (isc_result_t res, const char *errorstr);
+ 
+ /* Generate LDIF Format files */
+ void generate_ldap (dns_name_t * dnsname, dns_rdata_t * rdata,
+@@ -97,11 +97,17 @@ void generate_ldap (dns_name_t * dnsname, dns_rdata_t * rdata,
+ /* head pointer to the list */
+ ldap_info *ldap_info_base = NULL;
+ 
++ldap_info *
++locate_by_dn (char *dn);
++void
++init_ldap_conn ();
++void usage();
++
+ char *argzone, *ldapbase, *binddn, *bindpw = NULL;
+-char *ldapsystem = "localhost";
+-static char *objectClasses[] =
++const char *ldapsystem = "localhost";
++static const char *objectClasses[] =
+   { "top", "dNSZone", NULL };
+-static char *topObjectClasses[] = { "top", NULL };
++static const char *topObjectClasses[] = { "top", NULL };
+ LDAP *conn;
+ unsigned int debug = 0;
+ 
+@@ -128,7 +134,7 @@ main (int argc, char **argv)
+   LDAPMod *base_attrs[2];
+   LDAPMod base;
+   isc_buffer_t buff;
+-  char *zonefile;
++  char *zonefile=0L;
+   char fullbasedn[1024];
+   char *ctmp;
+   dns_fixedname_t fixedzone, fixedname;
+@@ -304,9 +310,9 @@ main (int argc, char **argv)
+ 	  if ((*ctmp == ',') || (ctmp == &basedn[0]))
+ 	    {
+ 	      base.mod_op = LDAP_MOD_ADD;
+-	      base.mod_type = "objectClass";
+-	      base.mod_values = topObjectClasses;
+-	      base_attrs[0] = &base;
++	      base.mod_type = (char*)"objectClass";
++	      base.mod_values = (char**)topObjectClasses;
++	      base_attrs[0] = (void*)&base;
+ 	      base_attrs[1] = NULL;
+ 
+ 	      if (ldapbase)
+@@ -363,7 +369,7 @@ main (int argc, char **argv)
+  * I should probably rename this function, as not to cause any
+  * confusion with the isc* routines. Will exit on error. */
+ void
+-isc_result_check (isc_result_t res, char *errorstr)
++isc_result_check (isc_result_t res, const char *errorstr)
+ {
+   if (res != ISC_R_SUCCESS)
+     {
+@@ -470,20 +476,20 @@ add_to_rr_list (char *dn, char *name, char *type,
+       if (tmp->attrs == (LDAPMod **) NULL)
+ 	fatal("calloc");
+ 
+-      for (i = 0; i < flags; i++)
++      for (i = 0; i < (int)flags; i++)
+ 	{
+ 	  tmp->attrs[i] = (LDAPMod *) malloc (sizeof (LDAPMod));
+ 	  if (tmp->attrs[i] == (LDAPMod *) NULL)
+ 	    fatal("malloc");
+ 	}
+       tmp->attrs[0]->mod_op = LDAP_MOD_ADD;
+-      tmp->attrs[0]->mod_type = "objectClass";
++      tmp->attrs[0]->mod_type = (char*)"objectClass";
+ 
+       if (flags == DNS_OBJECT)
+-	tmp->attrs[0]->mod_values = objectClasses;
++	tmp->attrs[0]->mod_values = (char**)objectClasses;
+       else
+ 	{
+-	  tmp->attrs[0]->mod_values = topObjectClasses;
++	  tmp->attrs[0]->mod_values = (char**)topObjectClasses;
+ 	  tmp->attrs[1] = NULL;
+ 	  tmp->attrcnt = 2;
+ 	  tmp->next = ldap_info_base;
+@@ -492,7 +498,7 @@ add_to_rr_list (char *dn, char *name, char *type,
+ 	}
+ 
+       tmp->attrs[1]->mod_op = LDAP_MOD_ADD;
+-      tmp->attrs[1]->mod_type = "relativeDomainName";
++      tmp->attrs[1]->mod_type = (char*)"relativeDomainName";
+       tmp->attrs[1]->mod_values = (char **) calloc (sizeof (char *), 2);
+ 
+       if (tmp->attrs[1]->mod_values == (char **)NULL)
+@@ -521,7 +527,7 @@ add_to_rr_list (char *dn, char *name, char *type,
+ 	 fatal("strdup");
+ 
+       tmp->attrs[3]->mod_op = LDAP_MOD_ADD;
+-      tmp->attrs[3]->mod_type = "dNSTTL";
++      tmp->attrs[3]->mod_type = (char*)"dNSTTL";
+       tmp->attrs[3]->mod_values = (char **) calloc (sizeof (char *), 2);
+ 
+       if (tmp->attrs[3]->mod_values == (char **)NULL)
+@@ -535,7 +541,7 @@ add_to_rr_list (char *dn, char *name, char *type,
+ 	 fatal("strdup");
+ 
+       tmp->attrs[4]->mod_op = LDAP_MOD_ADD;
+-      tmp->attrs[4]->mod_type = "zoneName";
++      tmp->attrs[4]->mod_type = (char*)"zoneName";
+       tmp->attrs[4]->mod_values = (char **)calloc(sizeof(char *), 2);
+ 
+       if (tmp->attrs[4]->mod_values == (char **)NULL)
+@@ -648,7 +654,7 @@ hostname_to_dn_list (char *hostname, char *zone, unsigned int flags)
+ 	  zname = ++tmp;
+ 	}
+       else
+-	hnamebuff = "@";
++	hnamebuff = (char*)"@";
+     }
+   else
+     {
+@@ -727,12 +733,12 @@ init_ldap_conn ()
+     }
+ 
+   result = ldap_simple_bind_s (conn, binddn, bindpw);
+-  ldap_result_check ("ldap_simple_bind_s", "LDAP Bind", result);
++  ldap_result_check ("ldap_simple_bind_s", (char*)"LDAP Bind", result);
+ }
+ 
+ /* Like isc_result_check, only for LDAP */
+ void
+-ldap_result_check (char *msg, char *dn, int err)
++ldap_result_check (const char *msg, char *dn, int err)
+ {
+   if ((err != LDAP_SUCCESS) && (err != LDAP_ALREADY_EXISTS))
+     {
+diff --git a/contrib/sdb/pgsql/pgsqldb.c b/contrib/sdb/pgsql/pgsqldb.c
+index 50d3cba..516eb9f 100644
+--- a/contrib/sdb/pgsql/pgsqldb.c
++++ b/contrib/sdb/pgsql/pgsqldb.c
+@@ -23,7 +23,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ 
+-#include <pgsql/libpq-fe.h>
++#include <libpq-fe.h>
+ 
+ #include <isc/mem.h>
+ #include <isc/print.h>
+diff --git a/contrib/sdb/pgsql/zonetodb.c b/contrib/sdb/pgsql/zonetodb.c
+index b8f5912..ff2d135 100644
+--- a/contrib/sdb/pgsql/zonetodb.c
++++ b/contrib/sdb/pgsql/zonetodb.c
+@@ -37,7 +37,7 @@
+ #include <dns/rdatatype.h>
+ #include <dns/result.h>
+ 
+-#include <pgsql/libpq-fe.h>
++#include <libpq-fe.h>
+ 
+ /*
+  * Generate a PostgreSQL table from a zone.
+@@ -54,6 +54,9 @@ char *dbname, *dbtable;
+ char str[10240];
+ 
+ void
++closeandexit(int status);
++
++void
+ closeandexit(int status) {
+ 	if (conn != NULL)
+ 		PQfinish(conn);
+@@ -61,6 +64,9 @@ closeandexit(int status) {
+ }
+ 
+ void
++check_result(isc_result_t result, const char *message);
++
++void
+ check_result(isc_result_t result, const char *message) {
+ 	if (result != ISC_R_SUCCESS) {
+ 		fprintf(stderr, "%s: %s\n", message,
+@@ -84,7 +90,8 @@ quotestring(const unsigned char *source, unsigned char *dest) {
+ 	}
+ 	*dest++ = 0;
+ }
+-
++void
++addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata);
+ void
+ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
+ 	unsigned char namearray[DNS_NAME_MAXTEXT + 1];

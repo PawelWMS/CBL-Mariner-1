@@ -1,0 +1,53 @@
+.\" Copyright (C) 2004, 2005, 2007-2009 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000, 2001 Internet Software Consortium.
+.\" 
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" Manpage written by Jan Gorig
+.TH zone2sqlite 1 "15 March 2010" "BIND9"
+.SH NAME
+zone2sqlite - Load BIND 9 zone file into SQLite database
+.SH SYNOPSIS
+.B zone2sqlite zone zonefile dbfile dbtable
+.SH DESCRIPTION
+zone2sqlite parses DNS zone file and creates database for use with SQLite BIND SDB driver.
+
+\fBzone\fR
+.RS 4
+Zone origin, eg "mydomain.net."
+.RE
+.PP
+\fBzonefile\fR
+.RS 4
+Master zone database file, eg. mydomain.net.zone
+.RE
+.PP
+\fBdbfile\fR
+.RS 4
+Name of SQLite database file
+.RE
+.PP
+\fBdbtable\fR
+.RS 4
+Name of table in database
+.RE
+
+.SH "EXIT STATUS"
+Exits with 0 on success or 1 on failure.
+.SH "SEE ALSO"
+named(8)
+.SH "COPYRIGHT"
+Copyright \(co 2004, 2005, 2007\-2009 Internet Systems Consortium, Inc. ("ISC")
+.br
+Copyright \(co 2000, 2001 Internet Software Consortium.
+.br

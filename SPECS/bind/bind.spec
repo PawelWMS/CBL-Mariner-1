@@ -3,13 +3,14 @@
 %global        chroot_create_directories /dev /run/named %{_localstatedir}/{log,named,tmp} \\\
                                          %{_sysconfdir}/crypto-policies/back-ends %{_sysconfdir}/pki/dnssec-keys %{_sysconfdir}/named \\\
                                          %{_libdir}/bind %{_libdir}/named %{_datadir}/GeoIP
+%global        chroot_sdb_prefix %{bind_dir}/chroot_sdb
 ## The order of libs is important. See lib/Makefile.in for details
 %define bind_export_libs isc dns isccfg irs
 %{!?_export_dir:%global _export_dir /bind9-export/}
 Summary:        Domain Name System software
 Name:           bind
 Version:        9.16.15
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        ISC
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -31,26 +32,49 @@ Source12:       generate-rndc-key.sh
 Source13:       named.rwtab
 Source14:       setup-named-softhsm.sh
 Source15:       named-chroot.files
+Source16:  bind-9.3.1rc1-sdb_tools-Makefile.in
+Source17:  dnszone.schema
+Source18: README.sdb_pgsql
+Source30: ldap2zone.c
+Source31: ldap2zone.1
+Source32: named-sdb.8
+Source33: zonetodb.1
+Source34: zone2sqlite.1
+Source39: named-sdb.service
+Source40: named-sdb-chroot.service
+Source45: named-sdb-chroot-setup.service
 # CVE-2019-6470 is fixed by updating the dhcp package to 4.4.1 or greater
 Patch0:         CVE-2019-6470.nopatch
 # CVE-2020-8623 only impacts package built with "--enable-native-pkcs11"
 Patch1:         CVE-2020-8623.nopatch
 Patch9:         bind-9.14-config-pkcs11.patch
 Patch10:        bind-9.10-dist-native-pkcs11.patch
+# SDB patches
+Patch11: bind-9.3.2b2-sdbsrc.patch
+Patch12: bind-9.10-sdb.patch
+Patch13: bind-9.3.2b1-fix_sdb_ldap.patch
+
+Patch101:bind-96-old-api.patch
+# [ISC-Bugs #42525] non-portable use of strlcat in contrib/sdb/ldap/zone2ldap.c
+# introduced by https://source.isc.org/cgi-bin/gitweb.cgi?p=bind9.git;a=commit;h=fc9f0ac5778f78003a7acc957a23711811fec122
+Patch137:bind-9.10-use-of-strlcat.patch
+
 BuildRequires:  gcc
 BuildRequires:  json-c-devel
 BuildRequires:  krb5-devel
-Requires(pre):  /usr/sbin/useradd /usr/sbin/groupadd
-Requires(postun):/usr/sbin/userdel /usr/sbin/groupdel
-BuildRequires:  openssl-devel
 BuildRequires:  libcap-devel
+BuildRequires:  libpq-devel
 BuildRequires:  libtool
 BuildRequires:  libuv-devel
 BuildRequires:  lmdb-devel
 BuildRequires:  make
+BuildRequires:  mariadb-devel
+BuildRequires:  openldap-devel
 BuildRequires:  openssl-devel
 BuildRequires:  python3
 BuildRequires:  python3-ply
+BuildRequires:  sqlite-devel
+
 Requires:       libuv
 Requires:       openssl
 Requires(postun): %{_sbindir}/groupdel
@@ -189,6 +213,35 @@ BuildArch:      noarch
 %description -n python3-bind
 This package provides a module which allows commands to be sent to rndc directly from Python programs.
 
+%package sdb
+Summary: BIND server with database backends and DLZ support
+
+Requires: systemd
+Requires: bind%{?_isa} = %{version}-%{release}
+Requires: bind-libs%{?_isa} = %{version}-%{release}
+
+%description sdb
+BIND (Berkeley Internet Name Domain) is an implementation of the DNS
+(Domain Name System) protocols. BIND includes a DNS server (named-sdb)
+which has compiled-in SDB (Simplified Database Backend) which includes
+support for using alternative Zone Databases stored in an LDAP server
+(ldapdb), a postgreSQL database (pgsqldb), an sqlite database (sqlitedb),
+or in the filesystem (dirdb), in addition to the standard in-memory RBT
+(Red Black Tree) zone database. It also includes support for DLZ
+(Dynamic Loadable Zones)
+
+%package sdb-chroot
+Summary:        A chroot runtime environment for the ISC BIND DNS server, named-sdb(8)
+Prefix:         %{chroot_sdb_prefix}
+# grep is required due to setup-named-chroot.sh script
+Requires:       grep
+Requires:       bind-sdb%{?_isa} = %{version}-%{release}
+
+%description sdb-chroot
+This package contains a tree of files which can be used as a
+chroot(2) jail for the named-sdb(8) program from the BIND package.
+Based on the code from Jan "Yenya" Kasprzak <kas@fi.muni.cz>
+
 %package utils
 Summary:        BIND utilities
 
@@ -205,22 +258,54 @@ cp -r lib/dns{,-pkcs11}
 cp -r lib/ns{,-pkcs11}
 %patch10 -p1 -b .dist_pkcs11
 
+%patch101 -p1 -b .old-api
+mkdir bin/named-sdb
+cp -r bin/named/* bin/named-sdb
+%patch11 -p1 -b .sdbsrc
+# SDB ldap
+cp -fp contrib/sdb/ldap/ldapdb.[ch] bin/named-sdb
+# SDB postgreSQL
+cp -fp contrib/sdb/pgsql/pgsqldb.[ch] bin/named-sdb
+# SDB sqlite
+cp -fp contrib/sdb/sqlite/sqlitedb.[ch] bin/named-sdb
+# SDB Berkeley DB - needs to be ported to DB4!
+#cp -fp contrib/sdb/bdb/bdb.[ch] bin/named_sdb
+# SDB dir
+cp -fp contrib/sdb/dir/dirdb.[ch] bin/named-sdb
+# SDB tools
+mkdir -p bin/sdb_tools
+cp -fp %{SOURCE30} bin/sdb_tools/ldap2zone.c
+cp -fp %{SOURCE16} bin/sdb_tools/Makefile.in
+#cp -fp contrib/sdb/bdb/zone2bdb.c bin/sdb_tools
+cp -fp contrib/sdb/ldap/{zone2ldap.1,zone2ldap.c} bin/sdb_tools
+cp -fp contrib/sdb/pgsql/zonetodb.c bin/sdb_tools
+cp -fp contrib/sdb/sqlite/zone2sqlite.c bin/sdb_tools
+%patch12 -p1 -b .sdb
+%patch13 -p1 -b .fix_sdb_ldap
+%patch137 -p1 -b .strlcat_fix
+
 libtoolize -c -f; aclocal -I libtool.m4 --force; autoconf -f
 
 %build
 ./configure \
-    --prefix=%{_prefix} \
-    --with-python=python3 \
-    --with-libtool \
-    --localstatedir=%{_var} \
     --disable-static \
-    --includedir=%{_includedir}/bind9 \
-    --enable-native-pkcs11 \
-    --with-lmdb=yes \
-    --without-libjson --with-json-c \
     --enable-fixed-rrset \
-    --with-docbook-xsl=%{_datadir}/sgml/docbook/xsl-ns-stylesheets \
     --enable-full-report \
+    --enable-native-pkcs11 \
+    --includedir=%{_includedir}/bind9 \
+    --localstatedir=%{_var} \
+    --prefix=%{_prefix} \
+    --with-dlopen=yes \
+    --with-dlz-filesystem=yes \
+    --with-dlz-ldap=yes \
+    --with-dlz-mysql=yes \
+    --with-dlz-postgres=yes \
+    --with-docbook-xsl=%{_datadir}/sgml/docbook/xsl-ns-stylesheets \
+    --with-libtool \
+    --with-lmdb=yes \
+    --with-python=python3 \
+    --without-libjson \
+    --with-json-c
 
 %make_build
 
@@ -236,6 +321,22 @@ for D in %{chroot_create_directories}
 do
   mkdir -p %{buildroot}/%{chroot_prefix}${D}
 done
+#end chroot
+
+#sdb-chroot
+for D in %{chroot_create_directories}
+do
+  mkdir -p %{buildroot}/%{chroot_sdb_prefix}${D}
+done
+
+# create symlink as it is on real filesystem
+pushd %{buildroot}/%{chroot_sdb_prefix}%{_localstatedir}
+ln -s ../run run
+popd
+
+# these are required to prevent them being erased during upgrade of previous
+touch %{buildroot}/%{chroot_sdb_prefix}%{_sysconfdir}/named.conf
+#end sdb-chroot
 
 # create symlink as it is on real filesystem
 pushd %{buildroot}/%{chroot_prefix}%{_var}
@@ -325,6 +426,20 @@ install -m 644 %{SOURCE13} %{buildroot}%{_sysconfdir}/rwtab.d/named
 # Remove unwanted files
 rm -f %{buildroot}%{_prefix}%{_sysconfdir}/bind.keys
 
+install -m 644 %{SOURCE39} %{buildroot}%{_unitdir}
+install -m 644 %{SOURCE40} %{buildroot}%{_unitdir}
+install -m 644 %{SOURCE45} %{buildroot}%{_unitdir}
+
+mkdir -p ${RPM_BUILD_ROOT}/etc/openldap/schema
+install -m 644 %{SOURCE17} ${RPM_BUILD_ROOT}/etc/openldap/schema/dnszone.schema
+install -m 644 %{SOURCE18} contrib/sdb/pgsql/
+
+# SDB manpages
+install -m 644 %{SOURCE31} ${RPM_BUILD_ROOT}%{_mandir}/man1/ldap2zone.1
+install -m 644 %{SOURCE32} ${RPM_BUILD_ROOT}%{_mandir}/man8/named-sdb.8
+install -m 644 %{SOURCE33} ${RPM_BUILD_ROOT}%{_mandir}/man1/zonetodb.1
+install -m 644 %{SOURCE34} ${RPM_BUILD_ROOT}%{_mandir}/man1/zone2sqlite.1
+
 %pre
 if ! getent group named >/dev/null; then
     groupadd -r named
@@ -367,6 +482,37 @@ Distribution:   Mariner
 if [ -x %{_sbindir}/selinuxenabled ] && %{_sbindir}/selinuxenabled; then
   [ -x /sbin/restorecon ] && /sbin/restorecon %{chroot_prefix}/dev/* > /dev/null 2>&1;
 fi;
+
+%post sdb
+# Initial installation
+%systemd_post named-sdb.service
+
+%preun sdb
+# Package removal, not upgrade
+%systemd_preun named-sdb.service
+
+%postun sdb
+# Package upgrade, not uninstall
+%systemd_postun_with_restart named-sdb.service
+
+%post sdb-chroot
+%systemd_post named-sdb-chroot.service
+%chroot_fix_devices %{chroot_sdb_prefix}
+:;
+
+%posttrans sdb-chroot
+if [ -x /usr/sbin/selinuxenabled ] && /usr/sbin/selinuxenabled; then
+  [ -x /sbin/restorecon ] && /sbin/restorecon %{chroot_sdb_prefix}/dev/* > /dev/null 2>&1;
+fi;
+:;
+
+%preun sdb-chroot
+%systemd_preun named-sdb-chroot.service 
+:;
+
+%postun sdb-chroot
+# Package upgrade, not uninstall
+%systemd_postun_with_restart named-sdb-chroot.service
 
 %files
 %dir %{_libdir}/bind
@@ -485,10 +631,10 @@ fi;
 %config(noreplace) %{_sysconfdir}/named-chroot.files
 %{_libexecdir}/setup-named-chroot.sh
 %defattr(0664,root,named,-)
-%ghost %dev(c,1,3) %verify(not mtime) %{chroot_prefix}/dev/null
-%ghost %dev(c,1,8) %verify(not mtime) %{chroot_prefix}/dev/random
-%ghost %dev(c,1,9) %verify(not mtime) %{chroot_prefix}/dev/urandom
-%ghost %dev(c,1,5) %verify(not mtime) %{chroot_prefix}/dev/zero
+%ghost %{dev(c,1,3)} %verify(not mtime) %{chroot_prefix}/dev/null
+%ghost %{dev(c,1,8)} %verify(not mtime) %{chroot_prefix}/dev/random
+%ghost %{dev(c,1,9)} %verify(not mtime) %{chroot_prefix}/dev/urandom
+%ghost %{dev(c,1,5)} %verify(not mtime) %{chroot_prefix}/dev/zero
 %defattr(0640,root,named,0750)
 %dir %{chroot_prefix}
 %dir %{chroot_prefix}/dev
@@ -515,6 +661,58 @@ fi;
 %dir %{chroot_prefix}/run/named
 %{chroot_prefix}%{_localstatedir}/run
 
+%files sdb
+%{_unitdir}/named-sdb.service
+%{_mandir}/man1/zone2ldap.1*
+%{_mandir}/man1/ldap2zone.1*
+%{_mandir}/man1/zonetodb.1*
+%{_mandir}/man1/zone2sqlite.1*
+%{_mandir}/man8/named-sdb.8*
+%doc contrib/sdb/ldap/README.ldap contrib/sdb/ldap/INSTALL.ldap contrib/sdb/pgsql/README.sdb_pgsql
+%dir %{_sysconfdir}/openldap/schema
+%config(noreplace) %{_sysconfdir}/openldap/schema/dnszone.schema
+%{_sbindir}/named-sdb
+%{_sbindir}/zone2ldap
+%{_sbindir}/ldap2zone
+%{_sbindir}/zonetodb
+%{_sbindir}/zone2sqlite
+
+%files sdb-chroot
+%config(noreplace) %{_sysconfdir}/named-chroot.files
+%{_unitdir}/named-sdb-chroot.service
+%{_unitdir}/named-sdb-chroot-setup.service
+%{_libexecdir}/setup-named-chroot.sh
+%defattr(0664,root,named,-)
+%ghost %dev(c,1,3) %verify(not mtime) %{chroot_sdb_prefix}/dev/null
+%ghost %dev(c,1,8) %verify(not mtime) %{chroot_sdb_prefix}/dev/random
+%ghost %dev(c,1,9) %verify(not mtime) %{chroot_sdb_prefix}/dev/urandom
+%ghost %dev(c,1,5) %verify(not mtime) %{chroot_sdb_prefix}/dev/zero
+%defattr(0640,root,named,0750)
+%dir %{chroot_sdb_prefix}
+%dir %{chroot_sdb_prefix}/dev
+%dir %{chroot_sdb_prefix}%{_sysconfdir}
+%dir %{chroot_sdb_prefix}%{_sysconfdir}/named
+%dir %{chroot_sdb_prefix}%{_sysconfdir}/pki
+%dir %{chroot_sdb_prefix}%{_sysconfdir}/pki/dnssec-keys
+%dir %{chroot_sdb_prefix}%{_sysconfdir}/crypto-policies
+%dir %{chroot_sdb_prefix}%{_sysconfdir}/crypto-policies/back-ends
+%dir %{chroot_sdb_prefix}%{_localstatedir}
+%dir %{chroot_sdb_prefix}/run
+%ghost %config(noreplace) %{chroot_sdb_prefix}%{_sysconfdir}/named.conf
+%defattr(0660,root,named,01770)
+%dir %{chroot_sdb_prefix}%{_localstatedir}/named
+%defattr(-,root,root,-)
+%dir %{chroot_sdb_prefix}/usr
+%dir %{chroot_sdb_prefix}/%{_libdir}
+%dir %{chroot_sdb_prefix}/%{_libdir}/bind
+%dir %{chroot_sdb_prefix}/%{_datadir}/GeoIP
+%defattr(0660,named,named,0770)
+%dir %{chroot_sdb_prefix}%{_localstatedir}/tmp
+%dir %{chroot_sdb_prefix}%{_localstatedir}/log
+%defattr(-,named,named,-)
+%dir %{chroot_sdb_prefix}/run/named
+%{chroot_sdb_prefix}%{_localstatedir}/run
+
 %files utils
 %defattr(-,root,root)
 %{_sbindir}/ddns-confgen
@@ -535,7 +733,12 @@ fi;
 %{_tmpfilesdir}/named.conf
 
 %changelog
-* Tue Jul 27 2021 Jon Slobodzian <joslobo@microsoft.com> - 9.16.15-1 
+* Wed Aug 25 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 9.16.15-2
+- Using Fedora 32 (license: MIT) spec to add following subpackages:
+  - sdb;
+  - sdb-chroot.
+
+* Tue Jul 27 2021 Jon Slobodzian <joslobo@microsoft.com> - 9.16.15-1
 - Update version to 9.16.15 to fix CVE-2021-25215
 - Remove unprovided soname version of libraries
 - Include versioned library names in libs subpackage
@@ -544,7 +747,7 @@ fi;
 - Merge the following releases from 1.0 to dev branch
 - nicolasg@microsoft.com, 9.16.3-3: Fixes CVE-2020-8625
 
-* Thu May 13 2021 Henry Li <lihl@microsoft.com> - 9.16.3-4 
+* Thu May 13 2021 Henry Li <lihl@microsoft.com> - 9.16.3-4
 - Fix file path error caused by linting
 - Remove duplicate %files section for bind-license
 - Remove named.conf from main package, which is already provided by bind-utils

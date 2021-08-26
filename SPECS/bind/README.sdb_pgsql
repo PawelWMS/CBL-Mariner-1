@@ -1,0 +1,79 @@
+			PGSQL BIND SDB driver
+
+The postgresql BIND SDB driver is of experimental status and should not be 
+used for production systems.
+
+Usage:
+
+o Use the named_sdb process ( put ENABLE_SDB=yes in /etc/sysconfig/named )
+
+o Edit your named.conf to contain a database zone, eg. :
+  
+zone "pgdb.net." IN {
+        type master;
+        database "pgsql  bind        pgdb     localhost pguser pgpasswd";
+        #                ^- DB name  ^-Table  ^-host    ^-user ^-password
+};
+
+o Create the database zone table
+  The table must contain the columns "name", "rdtype", and "rdata", and
+  is expected to contain a properly constructed zone.  The program "zonetodb"
+  creates such a table.
+  
+  zonetodb usage:
+    
+    zonetodb origin file dbname dbtable
+
+    where
+	origin : zone origin, eg "pgdb.net."
+	file   : master zone database file, eg. pgdb.net.db
+	dbname : name of postgresql database 
+        dbtable: name of table in database
+
+    Eg. to import this zone in the file 'pgdb.net.db' into the 'bind' database 
+        'pgdb' table:
+
+---
+#pgdb.net.db:
+$TTL 1H
+@       SOA     localhost.      root.localhost. (       1
+                                                3H
+                                                1H
+                                                1W
+                                                1H )
+        NS      localhost.
+host1   A       192.168.2.1
+host2   A       192.168.2.2
+host3   A       192.168.2.3
+host4   A       192.168.2.4
+host5   A       192.168.2.5
+host6   A       192.168.2.6
+host7   A       192.168.2.7
+---
+
+Issue this command as the pgsql user authorized to update the bind database:
+ 
+# zonetodb pgdb.net. pgdb.net.db bind pgdb
+
+will create / update the pgdb table in the 'bind' db:
+
+$ psql -dbind -c 'select * from pgdb;'
+      name      | ttl  | rdtype |                        rdata
+----------------+------+--------+-----------------------------------------------------
+ pgdb.net       | 3600 | SOA    | localhost. root.localhost. 1 10800 3600 604800 3600
+ pgdb.net       | 3600 | NS     | localhost.
+ host1.pgdb.net | 3600 | A      | 192.168.2.1
+ host2.pgdb.net | 3600 | A      | 192.168.2.2
+ host3.pgdb.net | 3600 | A      | 192.168.2.3
+ host4.pgdb.net | 3600 | A      | 192.168.2.4
+ host5.pgdb.net | 3600 | A      | 192.168.2.5
+ host6.pgdb.net | 3600 | A      | 192.168.2.6
+ host7.pgdb.net | 3600 | A      | 192.168.2.7
+(9 rows)
+
+I've tested exactly the above configuration with bind-sdb-9.3.1+ and it works OK.
+
+NOTE: If you use pgsqldb SDB, ensure the postgresql service is started before the named
+      service .
+
+USE AT YOUR OWN RISK!

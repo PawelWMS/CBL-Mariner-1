@@ -1,0 +1,18 @@
+diff --git a/bin/sdb_tools/zone2ldap.c b/bin/sdb_tools/zone2ldap.c
+index d56bc56..99c3314 100644
+--- a/bin/sdb_tools/zone2ldap.c
++++ b/bin/sdb_tools/zone2ldap.c
+@@ -817,11 +817,11 @@ build_dn_from_dc_list (char **dc_list, unsigned int ttl, int flag, char *zone)
+     }
+ 
+ 
+-      strlcat (dn, tmp, sizeof (dn));
++      strncat (dn, tmp, sizeof (dn) - strlen (dn));
+     }
+ 
+   sprintf (tmp, "dc=%s", dc_list[0]);
+-  strlcat (dn, tmp, sizeof (dn));
++  strncat (dn, tmp, sizeof (dn) - strlen (dn));
+ 
+ 	    fflush(NULL);
+   return dn;

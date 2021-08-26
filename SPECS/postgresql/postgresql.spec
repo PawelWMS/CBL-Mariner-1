@@ -1,7 +1,7 @@
 Summary:        PostgreSQL database engine
 Name:           postgresql
 Version:        12.7
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        PostgreSQL
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -48,6 +48,8 @@ PostgreSQL server.
 %package        devel
 Summary:        Development files for postgresql.
 Group:          Development/Libraries
+
+Provides:       libpq-devel = %{version}-%{release}
 
 Requires:       postgresql = %{version}-%{release}
 
@@ -169,6 +171,9 @@ rm -rf %{buildroot}/*
 %{_libdir}/libpgtypes.a
 
 %changelog
+* Wed Aug 25 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 12.7-2
+- Adding 'Provides: libpq-devel' to the 'devel' subpackage.
+
 * Fri Jun 11 2021 Henry Beberman <henry.beberman@microsoft.com> - 12.7-1
 - Update to version 12.7 to resolve CVE-2021-32027.
 
