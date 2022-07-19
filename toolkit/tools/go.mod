@@ -10,10 +10,10 @@ require (
 	github.com/klauspost/pgzip v1.2.5
 	github.com/muesli/crunchy v0.4.0
 	github.com/rivo/tview v0.0.0-20200219135020-0ba8301b415c
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.7.1
 	github.com/ulikunitz/xz v0.5.10
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 	gonum.org/v1/gonum v0.11.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
