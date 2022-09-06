@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/ulikunitz/xz v0.5.10
 	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654
-	gonum.org/v1/gonum v0.11.0
+	gonum.org/v1/gonum v0.12.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
 
