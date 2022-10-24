@@ -11,7 +11,7 @@ require (
 	github.com/muesli/crunchy v0.4.0
 	github.com/rivo/tview v0.0.0-20200219135020-0ba8301b415c
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.1
 	github.com/ulikunitz/xz v0.5.10
 	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654
 	gonum.org/v1/gonum v0.11.0
@@ -33,5 +33,5 @@ require (
 	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
