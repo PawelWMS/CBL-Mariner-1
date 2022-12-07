@@ -18,7 +18,7 @@
 Summary:        Linux Kernel
 Name:           kernel
 Version:        5.15.80.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 License:        GPLv2
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -45,6 +45,7 @@ BuildRequires:  openssl-devel
 BuildRequires:  pam-devel
 BuildRequires:  procps-ng-devel
 BuildRequires:  python3-devel
+BuildRequires:  rsync
 BuildRequires:  sed
 %ifarch x86_64
 BuildRequires:  pciutils-devel
@@ -183,8 +184,11 @@ make -C tools/perf PYTHON=%{python3} all
 make -C tools turbostat cpupower
 %endif
 
-#Compile bpftool
+# Compile bpftool
 make -C tools/bpf/bpftool
+
+# Build kselftests
+make -C tools/testing/selftests
 
 %define __modules_install_post \
 for MODULE in `find %{buildroot}/lib/modules/%{uname_r} -name *.ko` ; do \
@@ -281,6 +285,9 @@ make -C tools/perf DESTDIR=%{buildroot} prefix=%{_prefix} install-python_ext
 
 # Install bpftool
 make -C tools/bpf/bpftool DESTDIR=%{buildroot} prefix=%{_prefix} bash_compdir=%{_sysconfdir}/bash_completion.d/ mandir=%{_mandir} install
+
+# Install kselftests
+make -C tools/testing/selftests DESTDIR=%{buildroot} prefix=%{_prefix} install # INSTALL_PATH=%%{buildroot}
 
 %ifarch x86_64
 # Install turbostat cpupower
@@ -406,6 +413,9 @@ ln -sf linux-%{uname_r}.cfg /boot/mariner.cfg
 %{_sysconfdir}/bash_completion.d/bpftool
 
 %changelog
+* Wed Dec 07 2022 Pawel Winogrodzki <pawelwi@microsoft.com> - 5.15.80.1-3
+- Adding the "kselftest" subpackage.
+
 * Mon Dec 05 2022 Betty Lakes <bettylakes@microsoft.com> - 5.15.80.1-2
 - Turn on hibernation and its dependencies
 
