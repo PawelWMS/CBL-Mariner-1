@@ -96,7 +96,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoRootPath: '$(pipelinesRepoRoot)'
+          repoName: '$(pipelinesRepoFolder)'
           hostArchitecture: amd64
           isCheckBuild: false
           jobName: build_amd64
@@ -106,7 +106,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoRootPath: '$(pipelinesRepoRoot)'
+          repoName: '$(pipelinesRepoFolder)'
           hostArchitecture: arm64
           isCheckBuild: false
           jobName: build_arm64
@@ -116,7 +116,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoRootPath: '$(pipelinesRepoRoot)'
+          repoName: '$(pipelinesRepoFolder)'
           hostArchitecture: amd64
           isCheckBuild: true
           jobName: build_amd64_check
@@ -126,7 +126,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoRootPath: '$(pipelinesRepoRoot)'
+          repoName: '$(pipelinesRepoFolder)'
           hostArchitecture: arm64
           isCheckBuild: true
           jobName: build_arm64_check
