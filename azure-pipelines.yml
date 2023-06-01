@@ -27,7 +27,6 @@ variables:
   buildLogs: 'buildLogs'
   coreSpecsDir: 'SPECS'
   extendedSpecsDir: 'SPECS-EXTENDED'
-  ob_outputDirectory: '$(Build.SourcesDirectory)/ToBePublished'
   parameterSentinelValue: 'unknown'
   pipelinesRepoFolder: 'CBL-Mariner-Pipelines'
   pipelinesRepoRoot: '$(Agent.BuildDirectory)/$(pipelinesRepoFolder)'
@@ -47,6 +46,8 @@ extends:
       - job: nonsense
         pool:
           type: linux
+        variables:
+          ob_outputDirectory: '$(Build.SourcesDirectory)/ToBePublished'
         steps:
           - checkout: CBL-Mariner-Pipelines
             path: '$(pipelinesRepoFolder)'
