@@ -9,7 +9,7 @@ pr:
   - fasttrack*
   - main
 
-pool: mariner-core-x64-1es-mariner2-gpt-test
+# pool: mariner-core-x64-1es-mariner2-gpt-test
 
 steps:
 - script: echo Hello, world!
