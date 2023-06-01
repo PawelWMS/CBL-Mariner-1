@@ -41,13 +41,6 @@ extends:
       policheck:
         break: true
     stages:
-    - ${{ if eq(parameters.topicBranch, '') }}:
-      - 'No topic branch to build was specified' : error
-    - ${{ if and(parameters.isMariner1, ne(parameters.extendedSpecsToBuild, variables.parameterSentinelValue)) }}:
-      - 'Build is 1.0-based, but asks to build extended specs.' : error
-    - ${{ if and(eq(parameters.coreSpecsToBuild, variables.parameterSentinelValue), eq(parameters.extendedSpecsToBuild, variables.parameterSentinelValue)) }}:
-      - 'No specs to build are specified' : error
-
     - stage: default_nonsense
       jobs:
       - job: nonsense
