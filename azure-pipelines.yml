@@ -20,6 +20,6 @@ steps:
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
 
-- script: |
-      exit 1
-  displayName: 'Fail'
+# - script: |
+#       exit 1
+#   displayName: 'Fail'
