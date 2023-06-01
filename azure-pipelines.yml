@@ -11,6 +11,13 @@ pr:
 
 # pool: mariner-core-x64-1es-mariner2-gpt-test
 
+resources:
+  repositories:
+  - repository: CBL-Mariner-Pipelines
+    type: git
+    name: mariner/CBL-Mariner-Pipelines
+    ref: refs/heads/pawelwi/signing_livepatches
+
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
@@ -19,6 +26,11 @@ steps:
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
+
+- template: .pipelines/templates/KernelModulesSigning.yml@CBL-Mariner-Pipelines
+  parameters:
+    artifactsFolder: '$(Build.ArtifactStagingDirectory)/$(buildArtifactsFolder)'
+    repoRootPath: '$(Agent.BuildDirectory)/CBL-Mariner-Pipelines'
 
 # - script: |
 #       exit 1
