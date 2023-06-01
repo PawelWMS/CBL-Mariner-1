@@ -3,8 +3,7 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- tests/*
+trigger: none
 
 pool: mariner-core-x64-1es-mariner2-gpt-test
 
