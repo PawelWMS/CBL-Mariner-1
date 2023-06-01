@@ -17,7 +17,13 @@ resources:
     type: git
     name: mariner/CBL-Mariner-Pipelines
 
+variables:
+  pipelinesRepoFolder: '$(Agent.BuildDirectory)/CBL-Mariner-Pipelines'
+
 steps:
+- checkout: CBL-Mariner-Pipelines
+  path: '$(pipelinesRepoFolder)'
+
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
 
@@ -29,7 +35,7 @@ steps:
 - template: .pipelines/templates/KernelModulesSigning.yml@CBL-Mariner-Pipelines
   parameters:
     artifactsFolder: '$(Build.ArtifactStagingDirectory)/$(buildArtifactsFolder)'
-    repoRootPath: '$(Agent.BuildDirectory)/CBL-Mariner-Pipelines'
+    repoRootPath: '$(pipelinesRepoFolder)'
 
 # - script: |
 #       exit 1
