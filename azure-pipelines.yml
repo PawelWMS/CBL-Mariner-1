@@ -6,8 +6,7 @@
 trigger:
 - tests/*
 
-pool:
-  vmImage: ubuntu-latest
+pool: mariner-core-x64-1es-mariner2-gpt-test
 
 steps:
 - script: echo Hello, world!
