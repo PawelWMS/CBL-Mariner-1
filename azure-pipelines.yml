@@ -16,27 +16,136 @@ resources:
   - repository: CBL-Mariner-Pipelines
     type: git
     name: mariner/CBL-Mariner-Pipelines
+    ref: refs/heads/pawelwi/GH-Actions-Test
+  - repository: templates
+    type: git
+    name: OneBranch.Pipelines/GovernedTemplates
+    ref: refs/heads/main
 
 variables:
+  buildArtifacts: 'buildArtifacts'
+  buildLogs: 'buildLogs'
+  coreSpecsDir: 'SPECS'
+  extendedSpecsDir: 'SPECS-EXTENDED'
+  parameterSentinelValue: 'unknown'
   pipelinesRepoFolder: 'CBL-Mariner-Pipelines'
   pipelinesRepoRoot: '$(Agent.BuildDirectory)/$(pipelinesRepoFolder)'
+  repoName: 'CBL-Mariner'
 
-steps:
-- checkout: CBL-Mariner-Pipelines
-  path: '$(pipelinesRepoFolder)'
-
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
-
-- template: .pipelines/templates/KernelModulesSigning.yml@CBL-Mariner-Pipelines
+extends:
+  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
-    artifactsFolder: '$(Build.ArtifactStagingDirectory)/$(buildArtifactsFolder)'
-    repoRootPath: '$(pipelinesRepoRoot)'
+    globalSdl:
+      credscan:
+        suppressionsFile: $(pipelinesRepoRoot)\.config\CredScanSuppressions.json
+      policheck:
+        break: true
+    stages:
+    - ${{ if eq(parameters.topicBranch, '') }}:
+      - 'No topic branch to build was specified' : error
+    - ${{ if and(parameters.isMariner1, ne(parameters.extendedSpecsToBuild, variables.parameterSentinelValue)) }}:
+      - 'Build is 1.0-based, but asks to build extended specs.' : error
+    - ${{ if and(eq(parameters.coreSpecsToBuild, variables.parameterSentinelValue), eq(parameters.extendedSpecsToBuild, variables.parameterSentinelValue)) }}:
+      - 'No specs to build are specified' : error
+
+    - stage: default_nonsense
+      jobs:
+      - job: nonsense
+        pool:
+          type: linux
+        steps:
+          - checkout: CBL-Mariner-Pipelines
+            path: '$(pipelinesRepoFolder)'
+          
+          - script: echo Hello, world!
+            displayName: 'Run a one-line script'
+          
+          - script: |
+              echo Add other tasks to build, test, and deploy your project.
+              echo See https://aka.ms/yaml
+            displayName: 'Run a multi-line script'
+          
+          - template: .pipelines/templates/KernelModulesSigning.yml@CBL-Mariner-Pipelines
+            parameters:
+              artifactsFolder: '$(Build.ArtifactStagingDirectory)/$(buildArtifactsFolder)'
+              repoRootPath: '$(pipelinesRepoRoot)'
+
+    - stage: buddy_build
+      jobs:
+      # Validate parameters at template parse-time
+      - job: configure_build_number
+        pool:
+          type: linux
+        variables:
+          ob_outputDirectory: '$(Build.SourcesDirectory)/ToBePublished'
+        steps:
+          - checkout: CBL-Mariner-Pipelines
+            path: '$(pipelinesRepoFolder)'
+
+          - bash: |
+              # set build number
+              NEW_BUILD_NB=${{ parameters.topicBranch }}
+              NEW_BUILD_NB=${NEW_BUILD_NB//[\/]/+}
+              echo "Set build number to $NEW_BUILD_NB"
+              echo "##vso[task.setvariable variable=customBuildNb;isoutput=true]$NEW_BUILD_NB"
+            displayName: 'Set build number (1)'
+            name: setConfig
+
+          - task: onebranch.pipeline.version@1
+            displayName: 'Set build number (2)'
+            inputs:
+              system: 'Custom'
+              customVersion: '$(setConfig.customBuildNb)'
+            condition: succeededOrFailed()
+
+      - ${{ if eq(parameters.amd64NonCheckBuild, true) }}:
+        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+          parameters:
+            repoRootPath: '$(pipelinesRepoRoot)'
+            hostArchitecture: amd64
+            isCheckBuild: false
+            jobName: build_amd64
+            isMariner1: ${{ parameters.isMariner1 }}
+            topicBranch: ${{ parameters.topicBranch }}
+            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
+            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+
+      - ${{ if eq(parameters.arm64NonCheckBuild, true) }}:
+        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+          parameters:
+            repoRootPath: '$(pipelinesRepoRoot)'
+            hostArchitecture: arm64
+            isCheckBuild: false
+            jobName: build_arm64
+            isMariner1: ${{ parameters.isMariner1 }}
+            topicBranch: ${{ parameters.topicBranch }}
+            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
+            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+
+      - ${{ if eq(parameters.amd64CheckBuild, true) }}:
+        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+          parameters:
+            repoRootPath: '$(pipelinesRepoRoot)'
+            hostArchitecture: amd64
+            isCheckBuild: true
+            jobName: build_amd64_check
+            isMariner1: ${{ parameters.isMariner1 }}
+            topicBranch: ${{ parameters.topicBranch }}
+            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
+            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+
+      - ${{ if eq(parameters.arm64CheckBuild, true) }}:
+        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+          parameters:
+            repoRootPath: '$(pipelinesRepoRoot)'
+            hostArchitecture: arm64
+            isCheckBuild: true
+            jobName: build_arm64_check
+            isMariner1: ${{ parameters.isMariner1 }}
+            topicBranch: ${{ parameters.topicBranch }}
+            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
+            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+
 
 # - script: |
 #       exit 1
