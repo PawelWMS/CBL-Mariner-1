@@ -42,7 +42,7 @@ extends:
   parameters:
     globalSdl:
       credscan:
-        suppressionsFile: $(pipelinesRepoRoot)\.config\CredScanSuppressions.json
+        suppressionsFile: pipelines/.config/CredScanSuppressions.json
       policheck:
         break: true
     stages:
