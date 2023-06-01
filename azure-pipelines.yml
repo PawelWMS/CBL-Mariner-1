@@ -18,7 +18,8 @@ resources:
     name: mariner/CBL-Mariner-Pipelines
 
 variables:
-  pipelinesRepoFolder: '$(Agent.BuildDirectory)/CBL-Mariner-Pipelines'
+  pipelinesRepoFolder: 'CBL-Mariner-Pipelines'
+  pipelinesRepoRoot: '$(Agent.BuildDirectory)/$(pipelinesRepoFolder)'
 
 steps:
 - checkout: CBL-Mariner-Pipelines
@@ -35,7 +36,7 @@ steps:
 - template: .pipelines/templates/KernelModulesSigning.yml@CBL-Mariner-Pipelines
   parameters:
     artifactsFolder: '$(Build.ArtifactStagingDirectory)/$(buildArtifactsFolder)'
-    repoRootPath: '$(pipelinesRepoFolder)'
+    repoRootPath: '$(pipelinesRepoRoot)'
 
 # - script: |
 #       exit 1
