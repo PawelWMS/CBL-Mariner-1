@@ -84,7 +84,7 @@ extends:
 
           - bash: |
               # set build number
-              NEW_BUILD_NB=${{ parameters.topicBranch }}
+              NEW_BUILD_NB=main
               NEW_BUILD_NB=${NEW_BUILD_NB//[\/]/+}
               echo "Set build number to $NEW_BUILD_NB"
               echo "##vso[task.setvariable variable=customBuildNb;isoutput=true]$NEW_BUILD_NB"
@@ -98,53 +98,45 @@ extends:
               customVersion: '$(setConfig.customBuildNb)'
             condition: succeededOrFailed()
 
-      - ${{ if eq(parameters.amd64NonCheckBuild, true) }}:
-        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
-          parameters:
-            repoRootPath: '$(pipelinesRepoRoot)'
-            hostArchitecture: amd64
-            isCheckBuild: false
-            jobName: build_amd64
-            isMariner1: ${{ parameters.isMariner1 }}
-            topicBranch: ${{ parameters.topicBranch }}
-            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
-            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+      - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+        parameters:
+          repoRootPath: '$(pipelinesRepoRoot)'
+          hostArchitecture: amd64
+          isCheckBuild: false
+          jobName: build_amd64
+          topicBranch: main
+          coreSpecsToBuild: 'which zlib'
+          extendedSpecsToBuild: 'unknown'
 
-      - ${{ if eq(parameters.arm64NonCheckBuild, true) }}:
-        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
-          parameters:
-            repoRootPath: '$(pipelinesRepoRoot)'
-            hostArchitecture: arm64
-            isCheckBuild: false
-            jobName: build_arm64
-            isMariner1: ${{ parameters.isMariner1 }}
-            topicBranch: ${{ parameters.topicBranch }}
-            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
-            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+      - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+        parameters:
+          repoRootPath: '$(pipelinesRepoRoot)'
+          hostArchitecture: arm64
+          isCheckBuild: false
+          jobName: build_arm64
+          topicBranch: main
+          coreSpecsToBuild: 'which zlib'
+          extendedSpecsToBuild: 'unknown'
 
-      - ${{ if eq(parameters.amd64CheckBuild, true) }}:
-        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
-          parameters:
-            repoRootPath: '$(pipelinesRepoRoot)'
-            hostArchitecture: amd64
-            isCheckBuild: true
-            jobName: build_amd64_check
-            isMariner1: ${{ parameters.isMariner1 }}
-            topicBranch: ${{ parameters.topicBranch }}
-            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
-            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+      - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+        parameters:
+          repoRootPath: '$(pipelinesRepoRoot)'
+          hostArchitecture: amd64
+          isCheckBuild: true
+          jobName: build_amd64_check
+          topicBranch: main
+          coreSpecsToBuild: 'which zlib'
+          extendedSpecsToBuild: 'unknown'
 
-      - ${{ if eq(parameters.arm64CheckBuild, true) }}:
-        - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
-          parameters:
-            repoRootPath: '$(pipelinesRepoRoot)'
-            hostArchitecture: arm64
-            isCheckBuild: true
-            jobName: build_arm64_check
-            isMariner1: ${{ parameters.isMariner1 }}
-            topicBranch: ${{ parameters.topicBranch }}
-            coreSpecsToBuild: ${{ parameters.coreSpecsToBuild }}
-            extendedSpecsToBuild: ${{ parameters.extendedSpecsToBuild }}
+      - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
+        parameters:
+          repoRootPath: '$(pipelinesRepoRoot)'
+          hostArchitecture: arm64
+          isCheckBuild: true
+          jobName: build_arm64_check
+          topicBranch: main
+          coreSpecsToBuild: 'which zlib'
+          extendedSpecsToBuild: 'unknown'
 
 
 # - script: |
