@@ -27,6 +27,7 @@ variables:
   buildLogs: 'buildLogs'
   coreSpecsDir: 'SPECS'
   extendedSpecsDir: 'SPECS-EXTENDED'
+  LinuxContainerImage: mcr.microsoft.com/onebranch/cbl-mariner/build:2.0 # Docker image which is used to build the project https://aka.ms/obpipelines/containers
   parameterSentinelValue: 'unknown'
   pipelinesRepoFolder: 'CBL-Mariner-Pipelines'
   pipelinesRepoRoot: '$(Agent.BuildDirectory)/$(pipelinesRepoFolder)'
