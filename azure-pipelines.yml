@@ -22,6 +22,11 @@ resources:
     name: OneBranch.Pipelines/GovernedTemplates
     ref: refs/heads/main
 
+parameters:
+  - name: 'pipelinesRepoFolder'
+    type: string
+    default: 'CBL-Mariner-Pipelines'
+
 variables:
   buildArtifacts: 'buildArtifacts'
   buildLogs: 'buildLogs'
@@ -29,8 +34,7 @@ variables:
   extendedSpecsDir: 'SPECS-EXTENDED'
   LinuxContainerImage: mcr.microsoft.com/onebranch/cbl-mariner/build:2.0 # Docker image which is used to build the project https://aka.ms/obpipelines/containers
   parameterSentinelValue: 'unknown'
-  pipelinesRepoFolder: 'CBL-Mariner-Pipelines'
-  pipelinesRepoRoot: '$(Agent.BuildDirectory)/$(pipelinesRepoFolder)'
+  pipelinesRepoRoot: '$(Agent.BuildDirectory)/${{ parameters.pipelinesRepoFolder }}'
   repoName: 'CBL-Mariner'
 
 extends:
@@ -51,7 +55,7 @@ extends:
           ob_outputDirectory: '$(Build.SourcesDirectory)/ToBePublished'
         steps:
           - checkout: CBL-Mariner-Pipelines
-            path: '$(pipelinesRepoFolder)'
+            path: '${{ parameters.pipelinesRepoFolder }}'
           
           - script: echo Hello, world!
             displayName: 'Run a one-line script'
@@ -76,7 +80,7 @@ extends:
           ob_outputDirectory: '$(Build.SourcesDirectory)/ToBePublished'
         steps:
           - checkout: CBL-Mariner-Pipelines
-            path: '$(pipelinesRepoFolder)'
+            path: '${{ parameters.pipelinesRepoFolder }}'
 
           - bash: |
               # set build number
@@ -96,7 +100,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoName: '$(pipelinesRepoFolder)'
+          repoName: '${{ parameters.pipelinesRepoFolder }}'
           hostArchitecture: amd64
           isCheckBuild: false
           jobName: build_amd64
@@ -106,7 +110,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoName: '$(pipelinesRepoFolder)'
+          repoName: '${{ parameters.pipelinesRepoFolder }}'
           hostArchitecture: arm64
           isCheckBuild: false
           jobName: build_arm64
@@ -116,7 +120,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoName: '$(pipelinesRepoFolder)'
+          repoName: '${{ parameters.pipelinesRepoFolder }}'
           hostArchitecture: amd64
           isCheckBuild: true
           jobName: build_amd64_check
@@ -126,7 +130,7 @@ extends:
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
-          repoName: '$(pipelinesRepoFolder)'
+          repoName: '${{ parameters.pipelinesRepoFolder }}'
           hostArchitecture: arm64
           isCheckBuild: true
           jobName: build_arm64_check
