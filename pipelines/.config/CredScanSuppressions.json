@@ -2,8 +2,8 @@
     "tool": "Credential Scanner",
     "suppressions": [
         {
-            "file": "*.signatures.json",
-            "_justification": "False positive - files contain SHA256 hashes of source files, not passwords."
+            "file": "SPECS/shadow-utils/shadow-utils.signatures.json",
+            "_justification": "False positive - file contain SHA256 hashes of source files, not passwords."
         },
         {
             "file": "toolkit/imageconfigs/read-only-root-efi.json",
