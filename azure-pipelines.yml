@@ -105,8 +105,8 @@ extends:
           isCheckBuild: false
           jobName: build_amd64
           topicBranch: main
-          coreSpecsToBuild: 'which zlib whois'
-          extendedSpecsToBuild: 'unknown'
+          coreSpecsToBuild: 'which zlib wget'
+          extendedSpecsToBuild: 'whois'
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
@@ -115,8 +115,8 @@ extends:
           isCheckBuild: false
           jobName: build_arm64
           topicBranch: main
-          coreSpecsToBuild: 'which zlib whois'
-          extendedSpecsToBuild: 'unknown'
+          coreSpecsToBuild: 'which zlib wget'
+          extendedSpecsToBuild: 'whois'
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
@@ -125,8 +125,8 @@ extends:
           isCheckBuild: true
           jobName: build_amd64_check
           topicBranch: main
-          coreSpecsToBuild: 'which zlib whois'
-          extendedSpecsToBuild: 'unknown'
+          coreSpecsToBuild: 'which zlib wget'
+          extendedSpecsToBuild: 'whois'
 
       - template: .pipelines/templates/UnifiedBuddyBuildCommonJob.yml@CBL-Mariner-Pipelines
         parameters:
@@ -135,8 +135,8 @@ extends:
           isCheckBuild: true
           jobName: build_arm64_check
           topicBranch: main
-          coreSpecsToBuild: 'which zlib whois'
-          extendedSpecsToBuild: 'unknown'
+          coreSpecsToBuild: 'which zlib wget'
+          extendedSpecsToBuild: 'whois'
 
 
 # - script: |
