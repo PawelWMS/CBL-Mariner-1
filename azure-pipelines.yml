@@ -5,7 +5,7 @@
 
 trigger: none
 pr:
-  - fasttrack/*
+  - fasttrack*
 
 # pool: mariner-core-x64-1es-mariner2-gpt-test
 
