@@ -111,7 +111,7 @@ fi
 cmake --build . -j$NB_CORE_TO_USE
 
 popd
-
+ 
 %install
 pushd cmake/build
 DESTDIR="%{buildroot}" cmake --install .
